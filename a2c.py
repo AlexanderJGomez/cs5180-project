@@ -98,7 +98,7 @@ training_op_critic = tf.train.AdamOptimizer(
 ################################################################
 #Training loop
 gamma = 0.99        #discount factor
-num_episodes = 100
+num_episodes = 1000
 loss_critic_vals = []
 loss_actor_vals = []
 
@@ -155,7 +155,7 @@ with tf.Session() as sess:
             state = next_state
             #end while
         episode_history.append(reward_total)
-        steps_history.append(steps)_
+        steps_history.append(steps)
         print("Episode: {}, Number of Steps : {}, Cumulative reward: {:0.2f}".format(
             episode, steps, reward_total))
     np.save("summary.npy", {'episode_history': episode_history, 'steps_history': steps_history})
