@@ -1,11 +1,12 @@
 
 import gym
 import tensorflow as tf
+from tensorflow.python.framework import ops
+ops.reset_default_graph()
 import numpy as np
 import gym  #requires OpenAI gym installed
 import matplotlib.pyplot as plt
 import numpy as np
-get_ipython().run_line_magic('timeit', '')
 
 
 envs = {
@@ -35,7 +36,7 @@ def rolling_average(data, *, window_size):
 
 env = envs["bipedal-walker-v2"]
 
-tf.reset_default_graph()
+##tf.reset_default_graph()
 
 input_dims = 24
 state_placeholder = tf.placeholder(tf.float32, [None, input_dims]) 
@@ -104,6 +105,7 @@ loss_actor_vals = []
 with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
     episode_history = []
+    steps_history = []
     for episode in range(num_episodes):
         #receive initial state from E
         state = env.reset()   # state.shape -> (2,)
@@ -115,7 +117,7 @@ with tf.Session() as sess:
             #Sample action according to current policy
             #action.shape = (1,4)
             action  = sess.run(action_tf_var, feed_dict={
-                          state_placeholder: scale_state(state)})
+                          state_placeholder: state.reshape(1, -1)})
             #Execute action and observe reward & next state from E
             # next_state shape=(2,)    
             #env.step() requires input shape = (1,)
@@ -125,7 +127,7 @@ with tf.Session() as sess:
             reward_total += reward
             #V_of_next_state.shape=(1,1)
             V_of_next_state = sess.run(V, feed_dict = 
-                    {state_placeholder: scale_state(next_state)})  
+                    {state_placeholder: next_state.reshape(1, -1)})  
             #Set TD Target
             #target = r + gamma * V(next_state)     
             target = reward + gamma * np.squeeze(V_of_next_state) 
@@ -133,18 +135,18 @@ with tf.Session() as sess:
             # td_error = target - V(s)
             #needed to feed delta_placeholder in actor training
             td_error = target - np.squeeze(sess.run(V, feed_dict = 
-                        {state_placeholder: scale_state(state)})) 
+                        {state_placeholder: state.reshape(1, -1)})) 
             
             #Update actor by minimizing loss (Actor training)
             _, loss_actor_val  = sess.run(
                 [training_op_actor, loss_actor], 
                 feed_dict={action_placeholder: np.squeeze(action), 
-                state_placeholder: scale_state(state), 
+                state_placeholder: state.reshape(1, -1), 
                 delta_placeholder: td_error})
             #Update critic by minimizinf loss  (Critic training)
             _, loss_critic_val  = sess.run(
                 [training_op_critic, loss_critic], 
-                feed_dict={state_placeholder: scale_state(state), 
+                feed_dict={state_placeholder: state.reshape(1, -1), 
                 target_placeholder: target})
             loss_critic_vals.append(loss_critic_val)
             loss_actor_vals.append(loss_actor_val)
@@ -153,6 +155,8 @@ with tf.Session() as sess:
             state = next_state
             #end while
         episode_history.append(reward_total)
+        steps_history.append(steps)_
         print("Episode: {}, Number of Steps : {}, Cumulative reward: {:0.2f}".format(
             episode, steps, reward_total))
+    np.save("summary.npy", {'episode_history': episode_history, 'steps_history': steps_history})
 
