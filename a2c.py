@@ -75,7 +75,7 @@ def policy_network(state, n_outputs = 4):
     return action_tf_var, norm_dist
 
 lr_actor = 0.00002  #set learning rates
-lr_critic = 0.001
+lr_critic = 0.0001
 
 # define required placeholders
 action_placeholder = tf.placeholder(tf.float32)
@@ -98,7 +98,7 @@ training_op_critic = tf.train.AdamOptimizer(
 ################################################################
 #Training loop
 gamma = 0.99        #discount factor
-num_episodes = 3000
+num_episodes = 2000
 checkpoint_interval = 500
 
 saver = tf.train.Saver()
@@ -158,6 +158,6 @@ with tf.Session() as sess:
         print("Episode: {}, Number of Steps : {}, Cumulative reward: {:0.2f}".format(
             episode, steps, reward_total))
         if (episode + 1) % checkpoint_interval == 0:
-            save_path = saver.save(sess, "./tmp/pre_trained_step_%d.ckpt" % episode)
+            save_path = saver.save(sess, "./tmp/pre_trained_step_%d_2.ckpt" % episode)
     np.save("summary.npy", {'episode_history': episode_history, 'steps_history': steps_history})
 
