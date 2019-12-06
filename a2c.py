@@ -98,9 +98,10 @@ training_op_critic = tf.train.AdamOptimizer(
 ################################################################
 #Training loop
 gamma = 0.99        #discount factor
-num_episodes = 1000
-loss_critic_vals = []
-loss_actor_vals = []
+num_episodes = 3000
+checkpoint_interval = 500
+
+saver = tf.train.Saver()
 
 with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
@@ -148,8 +149,6 @@ with tf.Session() as sess:
                 [training_op_critic, loss_critic], 
                 feed_dict={state_placeholder: state.reshape(1, -1), 
                 target_placeholder: target})
-            loss_critic_vals.append(loss_critic_val)
-            loss_actor_vals.append(loss_actor_val)
 
             
             state = next_state
@@ -158,5 +157,7 @@ with tf.Session() as sess:
         steps_history.append(steps)
         print("Episode: {}, Number of Steps : {}, Cumulative reward: {:0.2f}".format(
             episode, steps, reward_total))
+        if (episode + 1) % checkpoint_interval == 0:
+            save_path = saver.save(sess, "./tmp/pre_trained_step_%d.ckpt" % episode)
     np.save("summary.npy", {'episode_history': episode_history, 'steps_history': steps_history})
 
